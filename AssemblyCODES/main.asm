@@ -21,17 +21,18 @@ arr:
 	jmp reset
 	.ORG $0024
 	jmp usart_rx
+
 reset:
-	.ORG $0034
+	.ORG $0026
 arr1:
-	.DB $59, $55, $59, $55, $2C, $49, $20, $4C, $6F, $76, $65, $20, $59, $6F, $75, $F0
+	.DB $59, $55, $59, $55, $2C, $49, $20, $4C, $6F, $76, $65, $20, $59, $6F, $75, $F0 ;"EARN,I Kill You" ;
 	clr r31
-	ldi r30, $68
+	ldi r30, $4C
 	clr r26
 	ldi r27, $01
 looop:
 	lpm r0, z+
-	cpi r30, $78
+	cpi r30, $5C
 	brsh exitthisloop
 	st x+, r0
 	rjmp looop
@@ -141,5 +142,5 @@ usart_rx:
 	lds r24, $00C6
 	out $25-IO_offset, r24
 	reti
-
+	
 .EXIT
