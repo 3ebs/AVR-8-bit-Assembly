@@ -1,0 +1,12 @@
+*.tmp
+*.obj
+*.map
+*.lss
+*.hex
+*.pdsbak
+*.atsln
+*.asmproj
+*.workspace
+*.xml
+*.pdsprj
+*.atsuo
