@@ -42,7 +42,7 @@ exitthisloop:
 	sts $00C1, r23
 	ldi r23, $06
 	sts $00C2, r23
-	ldi r23, $10
+	clr r23
 	sts $00C4, r23
 
 .MACRO DelayLoop
@@ -108,39 +108,44 @@ exitBigLoop:
 	;out sph, r16
 	ldi r16, $FF
 	out $24-IO_offset, r16
-	ldi r16, $01
 	sbi $27-IO_offset, 0
 	sbi $27-IO_offset, 1
 	sbi $27-IO_offset, 2
 	cbi $28-IO_offset, 1
 	initializeLCD r30, r17, r18
-	clr r26
-	ldi r27, $01
-firstlineLoop:
-	ld r20, x+
-	cpi r26, $06
-	brsh exitfirstline
-	writeByteLCD r20, r17
-	rjmp firstlineLoop
-exitfirstline:
-	ldi r20, $C0	
-	sendCommandLCD r20, r19
-	ldi r26, $05
-secondlineLoop:
-	ld r20, x+
-	cpi r26, 16
-	brsh exitsecondline
-	writeByteLCD r20, r17
-	rjmp secondlineLoop	 
-exitsecondline:	
+;	clr r26
+;	ldi r27, $01
+;firstlineLoop:
+;	ld r20, x+
+;	cpi r26, $06
+;	brsh exitfirstline
+;	writeByteLCD r20, r17
+;	rjmp firstlineLoop
+;exitfirstline:
+;	ldi r20, $C0	
+;	sendCommandLCD r20, r19
+;	ldi r26, $05
+;secondlineLoop:
+;	ld r20, x+
+;	cpi r26, 16
+;	brsh exitsecondline
+;	writeByteLCD r20, r17
+;	rjmp secondlineLoop	 
+;exitsecondline:	
 	sei
-	mainLOOP:
-		
-		rjmp mainLOOP
+	clr r23
+mainLOOP:
+	cp r24, r23
+	breq again
+	writeByteLCD r20, r17	
+	mov r23, r24
+	rjmp mainLOOP
+again:
+	rjmp mainLOOP
 
 usart_rx:
-	lds r24, $00C6
-	out $25-IO_offset, r24
+	lds r24, UDR0
+	;out $25-IO_offset, r24
 	reti
 	
 .EXIT
