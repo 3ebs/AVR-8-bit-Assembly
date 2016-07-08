@@ -14,6 +14,87 @@
 .EQU bigLoopCounter = 255
 .EQU smallLoopCounter = 255
 
+.MACRO start
+	ldi r23, (1 << TWINT)|(1 << TWSTA)|(1 << TWEN)|(1 << TWIE)
+	sts $BC, r23
+.ENDMACRO
+
+.MACRO ack
+	ldi r23, (1<<TWINT)|(1<<TWEA)|(1<<TWEN)|(1<<TWIE))
+	sts $BC, r23
+.ENDMACRO
+
+.MACRO pd
+	ldi r23, (1<<TWINT)|(1<<TWEN)|(1<<TWIE)
+	sts $BC, r23
+.ENDMACRO
+
+.MACRO nack
+	ldi r23, ((1<<TWINT)|(1<<TWEN)|(1<<TWIE))&(~(1<<TWEA)))
+	sts $BC, r23
+.ENDMACRO
+
+.MACRO stop
+	ldi r23, (1 << TWINT)|(1 << TWSTO)|(1 << TWEN)|(1 << TWIE)
+	sts $BC, r23
+.ENDMACRO
+
+.MACRO DelayLoop
+	push @0
+	push @1
+	clr @0
+bigLoop:
+	cpi @0, bigLoopCounter
+	brsh exitBigLoop
+	clr @1
+smallLoop:
+	cpi @1, smallLoopCounter
+	brsh exitSmallLoop
+	inc @1
+	rjmp smallLoop
+exitSmallLoop:
+	inc @0
+	rjmp bigLoop
+exitBigLoop:
+	pop @1
+	pop @0
+.ENDMACRO
+
+.MACRO sendCommandLCD
+	out $25-IO_offset, @0
+	sbi $28-IO_offset, 2
+	cbi $28-IO_offset, 0
+	DelayLoop @0, r19
+	cbi $28-IO_offset, 2
+	cbi $28-IO_offset, 0
+	DelayLoop @0, r19
+.ENDMACRO
+
+.MACRO initializeLCD
+	ldi @0, $38
+	sendCommandLCD @0
+	DelayLoop r17, r18
+	ldi @0, $01
+	sendCommandLCD @0, r19
+	DelayLoop r17, r18
+	ldi @0, $0E
+	sendCommandLCD @0, r19
+	DelayLoop r17, r18
+	ldi @0, $80
+	sendCommandLCD @0, r19
+	DelayLoop r17, r18
+.ENDMACRO
+
+.MACRO writeByteLCD
+	out $25-IO_offset, @0
+	sbi $28-IO_offset, 2
+	sbi $28-IO_offset, 0
+	DelayLoop @0, r17
+	cbi $28-IO_offset, 2
+	cbi $28-IO_offset, 0
+	DelayLoop @0, r17
+.ENDMACRO
+
 .DSEG
 	.ORG $0100
 arr:
@@ -114,86 +195,7 @@ exitthisloop:
 	clr r23
 	sts $BC, r23
 
-.MACRO start
-	ldi r23, (1 << TWINT)|(1 << TWSTA)|(1 << TWEN)|(1 << TWIE)
-	sts $BC, r23
-.ENDMACRO
 
-.MACRO ack
-	ldi r23, (1<<TWINT)|(1<<TWEA)|(1<<TWEN)|(1<<TWIE))
-	sts $BC, r23
-.ENDMACRO
-
-.MACRO pd
-	ldi r23, (1<<TWINT)|(1<<TWEN)|(1<<TWIE)
-	sts $BC, r23
-.ENDMACRO
-
-.MACRO nack
-	ldi r23, ((1<<TWINT)|(1<<TWEN)|(1<<TWIE))&(~(1<<TWEA)))
-	sts $BC, r23
-.ENDMACRO
-
-.MACRO stop
-	ldi r23, (1 << TWINT)|(1 << TWSTO)|(1 << TWEN)|(1 << TWIE)
-	sts $BC, r23
-.ENDMACRO
-
-.MACRO DelayLoop
-	push @0
-	push @1
-	clr @0
-bigLoop:
-	cpi @0, bigLoopCounter
-	brsh exitBigLoop
-	clr @1
-smallLoop:
-	cpi @1, smallLoopCounter
-	brsh exitSmallLoop
-	inc @1
-	rjmp smallLoop
-exitSmallLoop:
-	inc @0
-	rjmp bigLoop
-exitBigLoop:
-	pop @1
-	pop @0
-.ENDMACRO
-
-.MACRO sendCommandLCD
-	out $25-IO_offset, @0
-	sbi $28-IO_offset, 2
-	cbi $28-IO_offset, 0
-	DelayLoop @0, r19
-	cbi $28-IO_offset, 2
-	cbi $28-IO_offset, 0
-	DelayLoop @0, r19
-.ENDMACRO
-
-.MACRO initializeLCD
-	ldi @0, $38
-	sendCommandLCD @0
-	DelayLoop r17, r18
-	ldi @0, $01
-	sendCommandLCD @0, r19
-	DelayLoop r17, r18
-	ldi @0, $0E
-	sendCommandLCD @0, r19
-	DelayLoop r17, r18
-	ldi @0, $80
-	sendCommandLCD @0, r19
-	DelayLoop r17, r18
-.ENDMACRO
-
-.MACRO writeByteLCD
-	out $25-IO_offset, @0
-	sbi $28-IO_offset, 2
-	sbi $28-IO_offset, 0
-	DelayLoop @0, r17
-	cbi $28-IO_offset, 2
-	cbi $28-IO_offset, 0
-	DelayLoop @0, r17
-.ENDMACRO
 
 .CSEG
 	;ldi r16, LOW(RAMEND)
