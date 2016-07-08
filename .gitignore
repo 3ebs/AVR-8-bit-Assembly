@@ -10,3 +10,6 @@
 *.xml
 *.pdsprj
 *.atsuo
+ASMsim/ATmega328P/main.asm
+ASMsim/ATmega328P/Debug/Makefile
+*.lst
