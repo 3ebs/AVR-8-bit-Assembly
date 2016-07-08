@@ -17,75 +17,77 @@
 arr:
 	.BYTE 15
 
-.CSEG	;interrupt vector table
+.CSEG	;interrupt vector table using JMP instruction
 	.ORG $0000
 		jmp reset
+		nop ;INT0
 		nop
+		nop ;INT1
 		nop
+		nop ;PCINT0
 		nop
+		nop ;PCINT1
 		nop
+		nop ;PCINT2
 		nop
+		nop ;WDT
 		nop
+		nop ;TIMER2 COMPA
 		nop
+		nop ;TIMER2 COMPB
 		nop
+		nop ;TIMER2 OVF
 		nop
+		nop ;TIMER1 CAPT
 		nop
+		nop ;TIMER1 COMPA
 		nop
+		nop ;TIMER1 COMPB
 		nop
+		nop ;TIMER1 OVF
 		nop
+		nop ;TIMER0 COMPA
 		nop
+		nop ;TIMER0 COMPB
 		nop
+		nop ;TIMER0 OVF
 		nop
-		nop
-		nop
-		nop
-		nop
-		nop
-		nop
-		nop
-		nop
-		nop
-		nop
-		nop
-		nop
-		nop
-		nop
-		nop
-		nop
-		nop
+		nop ;SPI
 		nop
 		jmp usart_rx
+		nop ;USART UDRE
 		nop
-		nop
-		nop
-		nop
-		nop
-		nop
-		nop
-		nop
-		nop
-		nop
-		nop
-		nop
-		nop
-		nop
+		nop ;USART TX
+		nop 
+		nop ;ADC
+		nop 
+		nop ;EE READY
+		nop 
+		nop ;ANALOG COMP
+		nop 
+		nop ;TWI
+		nop 
+		nop ;SPM READY
+		nop 
 
 reset:
 	.ORG $0034
 arr1:
 	.DB $45, $41, $52, $4E, $2C, $49, $20, $4B, $69, $6C, $6C, $20, $59, $6F, $75, $F0 ;"EARN,I Kill You" ;
 	clr r31
-	ldi r30, $4C
+	ldi r30, $68
 	clr r26
 	ldi r27, $01
 looop:
 	lpm r0, z+
-	cpi r30, $5C
+	cpi r30, $78
 	brsh exitthisloop
 	st x+, r0
 	rjmp looop
 exitthisloop:
 	;initialize USART
+	clr r23
+	sts $00C0, r23
 	ldi r23, $90
 	sts $00C1, r23
 	ldi r23, $06
@@ -94,6 +96,14 @@ exitthisloop:
 	sts UBRR0H, r23
 	ldi r23, 6
 	sts UBRR0L, r23
+	;initialize timer 0 Fast-PWM
+	sbi $2A-IO_offset, 6
+	ldi r23, $83
+	out $24, r23
+	ldi r23, $05
+	out $25, r23
+	ldi r23, 128
+	out $27, r23
 
 .MACRO DelayLoop
 	push @0
