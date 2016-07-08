@@ -8,6 +8,8 @@
 .DEVICE ATMEGA328P
 .LISTMAC
 
+
+
 .EQU IO_offset = $20
 .EQU bigLoopCounter = 255
 .EQU smallLoopCounter = 255
@@ -50,8 +52,7 @@ arr:
 		nop
 		nop ;TIMER0 COMPB
 		nop
-		nop ;TIMER0 OVF
-		nop
+		jmp timer0_ovf
 		nop ;SPI
 		nop
 		jmp usart_rx
@@ -65,8 +66,7 @@ arr:
 		nop 
 		nop ;ANALOG COMP
 		nop 
-		nop ;TWI
-		nop 
+		jmp twi
 		nop ;SPM READY
 		nop 
 
@@ -78,6 +78,7 @@ arr1:
 	ldi r30, $68
 	clr r26
 	ldi r27, $01
+	sei
 looop:
 	lpm r0, z+
 	cpi r30, $78
@@ -104,6 +105,39 @@ exitthisloop:
 	out $25, r23
 	ldi r23, 128
 	out $27, r23
+	ldi r23, $01
+	sts $6E, r23
+	clr r29
+	;initialize I2C
+	ldi r23, $02
+	sts $B8, r23
+	clr r23
+	sts $BC, r23
+
+.MACRO start
+	ldi r23, (1 << TWINT)|(1 << TWSTA)|(1 << TWEN)|(1 << TWIE)
+	sts $BC, r23
+.ENDMACRO
+
+.MACRO ack
+	ldi r23, (1<<TWINT)|(1<<TWEA)|(1<<TWEN)|(1<<TWIE))
+	sts $BC, r23
+.ENDMACRO
+
+.MACRO pd
+	ldi r23, (1<<TWINT)|(1<<TWEN)|(1<<TWIE)
+	sts $BC, r23
+.ENDMACRO
+
+.MACRO nack
+	ldi r23, ((1<<TWINT)|(1<<TWEN)|(1<<TWIE))&(~(1<<TWEA)))
+	sts $BC, r23
+.ENDMACRO
+
+.MACRO stop
+	ldi r23, (1 << TWINT)|(1 << TWSTO)|(1 << TWEN)|(1 << TWIE)
+	sts $BC, r23
+.ENDMACRO
 
 .MACRO DelayLoop
 	push @0
@@ -192,19 +226,52 @@ secondlineLoop:
 	writeByteLCD r20
 	rjmp secondlineLoop	 
 exitsecondline:	
-	sei
-	clr r23
+	clr r30
+	clr r24
+	clr r28
+;	start
 mainLOOP:
-	cp r24, r23
-	breq again
-	writeByteLCD r24	
-	mov r23, r24
-	rjmp mainLOOP
-again:
+	;
 	rjmp mainLOOP
 
 usart_rx:
 	lds r24, UDR0
+	writeByteLCD r24	
+	reti
+
+twi:
+	lds r25, $B9
+	andi r25, $F8
+	cpi r25, $08
+	breq startSENT
+	cpi r25, $18
+	breq ackRECEIVED
+	cpi r25, $28
+	breq stopSENT
+	rjmp end
+startSENT:
+	ldi r25, $06
+	sts $BB, r25
+	pd
+	rjmp end
+ackRECEIVED:
+	sts $BB, r28
+	inc r28
+	pd
+	rjmp end
+stopSENT:
+	stop
+	rjmp end
+end:
+	reti	
+
+timer0_ovf:
+	inc r29
+	cpi r29, 3
+	brne end0
+	clr r29
+	start
+end0:
 	reti
 	
 .EXIT
