@@ -228,8 +228,6 @@ secondlineLoop:
 	writeByteLCD r20
 	rjmp secondlineLoop	 
 exitsecondline:	
-	clr r30
-	clr r24
 	clr r28
 ;	start
 mainLOOP:
