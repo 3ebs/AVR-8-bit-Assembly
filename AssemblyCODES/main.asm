@@ -5,6 +5,7 @@
 ; Author : Yousef
 ;
 
+.DEVICE ATMEGA328P
 .LISTMAC
 
 .EQU IO_offset = $20
@@ -16,16 +17,63 @@
 arr:
 	.BYTE 15
 
-.CSEG
+.CSEG	;interrupt vector table
 	.ORG $0000
-	jmp reset
-	.ORG $0024
-	jmp usart_rx
+		jmp reset
+		nop
+		nop
+		nop
+		nop
+		nop
+		nop
+		nop
+		nop
+		nop
+		nop
+		nop
+		nop
+		nop
+		nop
+		nop
+		nop
+		nop
+		nop
+		nop
+		nop
+		nop
+		nop
+		nop
+		nop
+		nop
+		nop
+		nop
+		nop
+		nop
+		nop
+		nop
+		nop
+		nop
+		nop
+		jmp usart_rx
+		nop
+		nop
+		nop
+		nop
+		nop
+		nop
+		nop
+		nop
+		nop
+		nop
+		nop
+		nop
+		nop
+		nop
 
 reset:
-	.ORG $0026
+	.ORG $0034
 arr1:
-	.DB $59, $55, $59, $55, $2C, $49, $20, $4C, $6F, $76, $65, $20, $59, $6F, $75, $F0 ;"EARN,I Kill You" ;
+	.DB $45, $41, $52, $4E, $2C, $49, $20, $4B, $69, $6C, $6C, $20, $59, $6F, $75, $F0 ;"EARN,I Kill You" ;
 	clr r31
 	ldi r30, $4C
 	clr r26
@@ -43,7 +91,9 @@ exitthisloop:
 	ldi r23, $06
 	sts $00C2, r23
 	clr r23
-	sts $00C4, r23
+	sts UBRR0H, r23
+	ldi r23, 6
+	sts UBRR0L, r23
 
 .MACRO DelayLoop
 	push @0
@@ -70,35 +120,35 @@ exitBigLoop:
 	out $25-IO_offset, @0
 	sbi $28-IO_offset, 2
 	cbi $28-IO_offset, 0
-	DelayLoop @0, @1
+	DelayLoop @0, r19
 	cbi $28-IO_offset, 2
 	cbi $28-IO_offset, 0
-	DelayLoop @0, @1
+	DelayLoop @0, r19
 .ENDMACRO
 
 .MACRO initializeLCD
 	ldi @0, $38
-	sendCommandLCD @0, r19
-	DelayLoop @1, @2
+	sendCommandLCD @0
+	DelayLoop r17, r18
 	ldi @0, $01
 	sendCommandLCD @0, r19
-	DelayLoop @1, @2
+	DelayLoop r17, r18
 	ldi @0, $0E
 	sendCommandLCD @0, r19
-	DelayLoop @1, @2
+	DelayLoop r17, r18
 	ldi @0, $80
 	sendCommandLCD @0, r19
-	DelayLoop @1, @2
+	DelayLoop r17, r18
 .ENDMACRO
 
 .MACRO writeByteLCD
 	out $25-IO_offset, @0
 	sbi $28-IO_offset, 2
 	sbi $28-IO_offset, 0
-	DelayLoop @0, @1
+	DelayLoop @0, r17
 	cbi $28-IO_offset, 2
 	cbi $28-IO_offset, 0
-	DelayLoop @0, @1
+	DelayLoop @0, r17
 .ENDMACRO
 
 .CSEG
@@ -112,32 +162,32 @@ exitBigLoop:
 	sbi $27-IO_offset, 1
 	sbi $27-IO_offset, 2
 	cbi $28-IO_offset, 1
-	initializeLCD r30, r17, r18
-;	clr r26
-;	ldi r27, $01
-;firstlineLoop:
-;	ld r20, x+
-;	cpi r26, $06
-;	brsh exitfirstline
-;	writeByteLCD r20, r17
-;	rjmp firstlineLoop
-;exitfirstline:
-;	ldi r20, $C0	
-;	sendCommandLCD r20, r19
-;	ldi r26, $05
-;secondlineLoop:
-;	ld r20, x+
-;	cpi r26, 16
-;	brsh exitsecondline
-;	writeByteLCD r20, r17
-;	rjmp secondlineLoop	 
-;exitsecondline:	
+	initializeLCD r30
+	clr r26
+	ldi r27, $01
+firstlineLoop:
+	ld r20, x+
+	cpi r26, $06
+	brsh exitfirstline
+	writeByteLCD r20
+	rjmp firstlineLoop
+exitfirstline:
+	ldi r20, $C0	
+	sendCommandLCD r20, r19
+	ldi r26, $05
+secondlineLoop:
+	ld r20, x+
+	cpi r26, 16
+	brsh exitsecondline
+	writeByteLCD r20
+	rjmp secondlineLoop	 
+exitsecondline:	
 	sei
 	clr r23
 mainLOOP:
 	cp r24, r23
 	breq again
-	writeByteLCD r20, r17	
+	writeByteLCD r24	
 	mov r23, r24
 	rjmp mainLOOP
 again:
@@ -145,7 +195,6 @@ again:
 
 usart_rx:
 	lds r24, UDR0
-	;out $25-IO_offset, r24
 	reti
 	
 .EXIT
